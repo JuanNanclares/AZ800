@@ -2261,18 +2261,36 @@
       "explicacion": "Para habilitar SSH directo en VMs con Windows Server se debe instalar el servidor OpenSSH usando Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0. VM2 (RHEL) ya tiene SSH disponible de forma nativa en Linux, por lo que no requiere configuracion adicional. VM1 y VM3 son Windows Server 2025 y necesitan que se instale y habilite el servidor OpenSSH. Despues de instalar la capacidad, tambien se debe iniciar el servicio sshd y configurarlo para inicio automatico."
     },
     {
-      "id": 144,
-      "area": "Manage Windows Server",
-      "titulo": "Manage Windows Ser Q8",
-      "tipo": "hotspot",
-      "pregunta": "Tienes sub1 y 500 VMs locales con Windows Server. Planeas incorporarlas a Azure Arc ejecutando un script de implementacion. Debes crear una identidad para que el script autentique el acceso a sub1. La solucion debe usar el principio de menor privilegio. Como debes completar el comando?",
-      "respuesta_correcta": {
-        "tipo_de_identidad": "Service Principal (entidad de servicio)",
-        "rol_a_asignar": "Azure Connected Machine Onboarding",
-        "ambito": "Subscription (sub1)"
-      },
-      "explicacion": "Para incorporar servidores a Azure Arc de forma automatizada mediante script, se necesita una entidad de servicio (Service Principal) con el rol 'Azure Connected Machine Onboarding'. Este rol tiene los permisos minimos necesarios para registrar maquinas en Azure Arc y cumple el principio de menor privilegio. Asignar roles mas amplios como Contributor o Owner seria excesivo. El ambito debe ser la suscripcion sub1 para que el script pueda incorporar todas las VMs. El comando tipico es: az ad sp create-for-rbac --name <nombre> --role 'Azure Connected Machine Onboarding' --scopes /subscriptions/<id>."
+  "id": 144,
+  "area": "Manage Windows Server",
+  "titulo": "Manage Windows Ser Q8",
+  "tipo": "hotspot",
+  "pregunta": "Tienes sub1 y 500 VMs locales con Windows Server. Planeas incorporarlas a Azure Arc ejecutando un script de implementacion. Debes crear una identidad para que el script autentique el acceso a sub1. La solucion debe usar el principio de menor privilegio. Como debes completar el comando?",
+  "comando_template": "New-Az[DROPDOWN_1] -DisplayName 'Arc-for-servers' -Role [DROPDOWN_2]",
+  "hotspot_campos": [
+    {
+      "id": "DROPDOWN_1",
+      "label": "Tipo de identidad",
+      "opciones": [
+        "AzADAppCredential",
+        "AzADServicePrincipal",
+        "AzUserAssignedIdentity"
+      ],
+      "respuesta_correcta": "AzADServicePrincipal"
     },
+    {
+      "id": "DROPDOWN_2",
+      "label": "Rol a asignar",
+      "opciones": [
+        "'Azure Connected Machine Onboarding'",
+        "'Virtual Machine Contributor'",
+        "'Virtual Machine User Login'"
+      ],
+      "respuesta_correcta": "'Azure Connected Machine Onboarding'"
+    }
+  ],
+  "explicacion": "New-AzADServicePrincipal crea una entidad de servicio, que es la identidad correcta para autenticar scripts automatizados en Azure. El rol 'Azure Connected Machine Onboarding' tiene los permisos minimos necesarios para registrar maquinas en Azure Arc, cumpliendo el principio de menor privilegio. Roles como 'Virtual Machine Contributor' otorgarian permisos excesivos."
+},
     {
       "id": 145,
       "area": "Manage virtual machines",
