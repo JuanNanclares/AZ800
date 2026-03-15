@@ -173,6 +173,28 @@
     .yesno-btn.wrong-btn    { background: #450a0a; border-color: #ef4444; color: #fca5a5; }
 
     /* ── Hotspot ── */
+    .hotspot-wrapper {
+      background: #0a1628;
+      border: 1px solid #1e3a5f;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .hotspot-command {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 0.92rem;
+      color: #7dd3fc;
+      background: #0f172a;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 14px;
+      line-height: 2;
+      flex-wrap: wrap;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .hotspot-command span { color: #e2e8f0; }
     .hotspot-row {
       background: #0f172a;
       border: 1px solid #334155;
@@ -188,6 +210,7 @@
       flex: 1;
       font-size: 0.92rem;
       color: #cbd5e1;
+      min-width: 140px;
     }
     .hotspot-select {
       background: #1e293b;
@@ -196,12 +219,41 @@
       border-radius: 8px;
       padding: 7px 12px;
       font-size: 0.88rem;
-      min-width: 160px;
+      min-width: 200px;
       cursor: pointer;
+      transition: border-color 0.2s;
     }
-    .hotspot-select:focus { outline: none; border-color: #38bdf8; }
+    .hotspot-select:focus  { outline: none; border-color: #38bdf8; }
     .hotspot-select.correct-sel { border-color: #10b981; background: #064e3b; color: #6ee7b7; }
     .hotspot-select.wrong-sel   { border-color: #ef4444; background: #450a0a; color: #fca5a5; }
+
+    /* ── Drag & Drop (orden) ── */
+    .drag-list {
+      list-style: none;
+      padding: 0;
+      margin-bottom: 12px;
+    }
+    .drag-item {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      cursor: grab;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.92rem;
+      color: #cbd5e1;
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .drag-item:hover { border-color: #38bdf8; background: #1e3a5f; }
+    .drag-item.dragging { opacity: 0.4; cursor: grabbing; }
+    .drag-item.drag-over { border-color: #818cf8; background: #1e1b4b; }
+    .drag-item.correct-order { border-color: #10b981; background: #064e3b; color: #6ee7b7; }
+    .drag-item.wrong-order   { border-color: #ef4444; background: #450a0a; color: #fca5a5; }
+    .drag-handle { color: #475569; font-size: 1rem; }
 
     /* ── Explicación ── */
     #explanation-box {
@@ -306,7 +358,7 @@
     #loading { color: #94a3b8; font-size: 1.1rem; margin-top: 60px; text-align: center; }
 
     /* ── Review ── */
-    .tag-correct { color: #10b981; font-weight: 700; }
+    .tag-correct   { color: #10b981; font-weight: 700; }
     .tag-incorrect { color: #ef4444; font-weight: 700; }
     #review-list { margin-top: 24px; text-align: left; }
     .review-item {
@@ -403,33 +455,32 @@
 </div>
 
 <script>
-  let allQuestions  = [];
+  let allQuestions    = [];
   let activeQuestions = [];
-  let currentIndex  = 0;
-  let score         = 0;
-  let wrongCount    = 0;
-  let results       = [];
+  let currentIndex    = 0;
+  let score           = 0;
+  let wrongCount      = 0;
+  let results         = [];
 
-  // ── Carga JSON ─────────────────────────────────────────────
+  // ── Carga JSON ──────────────────────────────────────────────
   fetch('questions.json')
     .then(r => r.json())
     .then(data => {
       allQuestions = data.preguntas;
       buildTopicFilter();
       initQuiz();
-      document.getElementById('loading').style.display = 'none';
+      document.getElementById('loading').style.display   = 'none';
       document.getElementById('quiz-body').style.display = 'block';
     })
-    .catch(err => {
+    .catch(() => {
       document.getElementById('loading').textContent =
         '❌ Error al cargar questions.json. Verifica que el archivo existe junto al HTML.';
-      console.error(err);
     });
 
-  // ── Filtro de temas ────────────────────────────────────────
+  // ── Filtro de temas ─────────────────────────────────────────
   function buildTopicFilter() {
     const topics = [...new Set(allQuestions.map(q => q.area))].sort();
-    const sel = document.getElementById('topic-filter');
+    const sel    = document.getElementById('topic-filter');
     topics.forEach(t => {
       const opt = document.createElement('option');
       opt.value = t; opt.textContent = t;
@@ -437,7 +488,7 @@
     });
   }
 
-  // ── Inicializar quiz ───────────────────────────────────────
+  // ── Inicializar quiz ────────────────────────────────────────
   function initQuiz() {
     const topic = document.getElementById('topic-filter').value;
     const type  = document.getElementById('type-filter').value;
@@ -449,18 +500,17 @@
       return topicOk && typeOk;
     });
 
-    filtered = filtered.sort(() => Math.random() - 0.5);
+    filtered        = filtered.sort(() => Math.random() - 0.5);
     activeQuestions = filtered.slice(0, Math.min(num, filtered.length));
-
-    currentIndex = 0; score = 0; wrongCount = 0; results = [];
+    currentIndex    = 0; score = 0; wrongCount = 0; results = [];
 
     document.getElementById('score-screen').style.display = 'none';
-    document.getElementById('quiz-body').style.display   = 'block';
+    document.getElementById('quiz-body').style.display    = 'block';
     updateStats();
     showQuestion();
   }
 
-  // ── Stats ──────────────────────────────────────────────────
+  // ── Stats ───────────────────────────────────────────────────
   function updateStats() {
     document.getElementById('stat-current').textContent = Math.min(currentIndex + 1, activeQuestions.length);
     document.getElementById('stat-total').textContent   = activeQuestions.length;
@@ -468,7 +518,7 @@
     document.getElementById('stat-wrong').textContent   = wrongCount;
   }
 
-  // ── Mostrar pregunta ───────────────────────────────────────
+  // ── Mostrar pregunta ────────────────────────────────────────
   function showQuestion() {
     if (currentIndex >= activeQuestions.length) { showScore(); return; }
 
@@ -476,75 +526,70 @@
     const total = activeQuestions.length;
     const pct   = Math.round((currentIndex / total) * 100);
 
-    document.getElementById('progress-bar').style.width = pct + '%';
-    document.getElementById('question-counter').textContent = `Pregunta ${currentIndex + 1} de ${total}`;
-    document.getElementById('topic-badge').textContent = q.area   || '';
-    document.getElementById('tipo-badge').textContent  = tipoLabel(q.tipo);
-    document.getElementById('question-text').textContent = q.pregunta || '';
+    document.getElementById('progress-bar').style.width      = pct + '%';
+    document.getElementById('question-counter').textContent  = `Pregunta ${currentIndex + 1} de ${total}`;
+    document.getElementById('topic-badge').textContent       = q.area || '';
+    document.getElementById('tipo-badge').textContent        = tipoLabel(q.tipo);
+    document.getElementById('question-text').textContent     = q.pregunta || '';
 
-    // Tabla de datos opcional
+    // Tabla opcional
     const tableContainer = document.getElementById('table-container');
     tableContainer.innerHTML = '';
-    if (q.tabla_datos && q.tabla_datos.length > 0) {
+    if (q.tabla_datos && q.tabla_datos.length > 0)
       tableContainer.appendChild(buildTable(q.tabla_datos));
-    }
 
-    // Opciones según tipo
+    // Render según tipo
     const container = document.getElementById('options-container');
     container.innerHTML = '';
 
-    if (q.tipo === 'opcion_multiple' || q.tipo === 'orden') {
-      renderOpciones(q, container);
-    } else if (q.tipo === 'yes_no') {
-      renderYesNo(q, container);
-    } else if (q.tipo === 'hotspot') {
-      renderHotspot(q, container);
-    } else if (q.tipo === 'simulacion') {
-      renderSimulacion(q, container);
-    } else {
-      renderOpciones(q, container);
-    }
+    const handlers = {
+      opcion_multiple: renderOpciones,
+      yes_no:          renderYesNo,
+      hotspot:         renderHotspot,
+      simulacion:      renderSimulacion,
+      orden:           renderOrden
+    };
+    (handlers[q.tipo] || renderOpciones)(q, container);
 
     document.getElementById('explanation-box').style.display = 'none';
-    document.getElementById('btn-next').disabled = true;
+    document.getElementById('btn-next').disabled             = true;
+    document.getElementById('btn-next').onclick              = nextQuestion;
+    document.getElementById('btn-next')._yesnoHandler        = null;
+    document.getElementById('btn-next')._hotspotHandler      = null;
+    document.getElementById('btn-next')._ordenHandler        = null;
     updateStats();
   }
 
-  // ── Label tipo ─────────────────────────────────────────────
+  // ── Label tipo ──────────────────────────────────────────────
   function tipoLabel(tipo) {
-    const map = {
+    return {
       opcion_multiple: '🔘 Opción múltiple',
       yes_no:          '✅ Yes / No',
       hotspot:         '🎯 Hotspot',
       simulacion:      '🖥️ Simulación',
       orden:           '🔢 Orden'
-    };
-    return map[tipo] || tipo;
+    }[tipo] || tipo;
   }
 
-  // ── Construir tabla ────────────────────────────────────────
+  // ── Tabla ───────────────────────────────────────────────────
   function buildTable(data) {
     const table = document.createElement('table');
     table.className = 'data-table';
-    const keys = Object.keys(data[0]);
-
+    const keys  = Object.keys(data[0]);
     const thead = document.createElement('thead');
     const hrow  = document.createElement('tr');
     keys.forEach(k => {
       const th = document.createElement('th');
-      th.textContent = k;
-      hrow.appendChild(th);
+      th.textContent = k; hrow.appendChild(th);
     });
     thead.appendChild(hrow);
     table.appendChild(thead);
-
     const tbody = document.createElement('tbody');
     data.forEach(row => {
       const tr = document.createElement('tr');
       keys.forEach(k => {
         const td = document.createElement('td');
-        td.textContent = row[k] ?? '';
-        tr.appendChild(td);
+        td.textContent = row[k] ?? ''; tr.appendChild(td);
       });
       tbody.appendChild(tr);
     });
@@ -552,11 +597,10 @@
     return table;
   }
 
-  // ── Render: opción múltiple ────────────────────────────────
+  // ── Render: opción múltiple ─────────────────────────────────
   function renderOpciones(q, container) {
     const opciones = q.opciones || [];
-    if (opciones.length === 0) { renderSimulacion(q, container); return; }
-
+    if (!opciones.length) { renderSimulacion(q, container); return; }
     opciones.forEach(opt => {
       const btn = document.createElement('button');
       btn.className   = 'option-btn';
@@ -567,36 +611,34 @@
   }
 
   function selectOpcion(btn, selected, q) {
-    const buttons = document.querySelectorAll('.option-btn');
-    buttons.forEach(b => b.disabled = true);
-
-    const letra    = selected.trim().charAt(0).toUpperCase();
+    document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+    const letra     = selected.trim().charAt(0).toUpperCase();
     const isCorrect = q.respuesta_correcta.some(r => r.trim().toUpperCase() === letra);
 
-    if (isCorrect) { btn.classList.add('correct'); score++; }
-    else {
+    if (isCorrect) {
+      btn.classList.add('correct');
+      score++;
+    } else {
       btn.classList.add('incorrect');
       wrongCount++;
-      buttons.forEach(b => {
-        const l = b.textContent.trim().charAt(0).toUpperCase();
-        if (q.respuesta_correcta.some(r => r.trim().toUpperCase() === l))
+      document.querySelectorAll('.option-btn').forEach(b => {
+        if (q.respuesta_correcta.some(r => r.trim().toUpperCase() === b.textContent.trim().charAt(0).toUpperCase()))
           b.classList.add('reveal-correct');
       });
     }
-
     results.push({ q, userAnswer: selected, correct: isCorrect });
     showExplanation(q);
     document.getElementById('btn-next').disabled = false;
     updateStats();
   }
 
-  // ── Render: Yes / No ───────────────────────────────────────
+  // ── Render: Yes / No ────────────────────────────────────────
   function renderYesNo(q, container) {
     const afirmaciones = q.afirmaciones || [];
     const userAnswers  = new Array(afirmaciones.length).fill(null);
 
     afirmaciones.forEach((af, i) => {
-      const row = document.createElement('div');
+      const row   = document.createElement('div');
       row.className = 'yesno-row';
 
       const label = document.createElement('div');
@@ -606,20 +648,16 @@
       const btns = document.createElement('div');
       btns.className = 'yesno-btns';
 
-      ['Sí','No'].forEach(val => {
+      ['Sí', 'No'].forEach(val => {
         const b = document.createElement('button');
         b.className   = 'yesno-btn';
         b.textContent = val;
         b.dataset.val = val === 'Sí' ? 'yes' : 'no';
         b.onclick = () => {
-          // deselect sibling
-          btns.querySelectorAll('.yesno-btn').forEach(x => {
-            x.classList.remove('selected-yes','selected-no');
-          });
+          btns.querySelectorAll('.yesno-btn').forEach(x =>
+            x.classList.remove('selected-yes', 'selected-no'));
           b.classList.add(val === 'Sí' ? 'selected-yes' : 'selected-no');
           userAnswers[i] = val === 'Sí' ? 'yes' : 'no';
-
-          // Si todas respondidas, habilitar siguiente
           if (userAnswers.every(a => a !== null))
             document.getElementById('btn-next').disabled = false;
         };
@@ -631,7 +669,6 @@
       container.appendChild(row);
     });
 
-    // Sobreescribir btn-next para validar al hacer clic
     const btnNext = document.getElementById('btn-next');
     btnNext._yesnoHandler = () => validateYesNo(q, userAnswers, container);
     btnNext.onclick = () => {
@@ -642,62 +679,58 @@
   function validateYesNo(q, userAnswers, container) {
     const correctas = q.respuesta_correcta.map(r => {
       const v = r.trim().toLowerCase();
-      if (v === 'yes' || v === 'si' || v === 'sí') return 'yes';
-      return 'no';
+      return (v === 'yes' || v === 'si' || v === 'sí') ? 'yes' : 'no';
     });
 
-    const rows = container.querySelectorAll('.yesno-row');
     let allCorrect = true;
-
-    rows.forEach((row, i) => {
-      const btns = row.querySelectorAll('.yesno-btn');
-      const userVal    = userAnswers[i];
-      const correctVal = correctas[i];
-
-      btns.forEach(b => {
+    container.querySelectorAll('.yesno-row').forEach((row, i) => {
+      row.querySelectorAll('.yesno-btn').forEach(b => {
         b.disabled = true;
-        const bVal = b.dataset.val;
-        if (bVal === correctVal) b.classList.add('correct-yes');
-        if (bVal === userVal && bVal !== correctVal) { b.classList.add('wrong-btn'); allCorrect = false; }
+        if (b.dataset.val === correctas[i])   b.classList.add('correct-yes');
+        if (b.dataset.val === userAnswers[i] && b.dataset.val !== correctas[i]) {
+          b.classList.add('wrong-btn');
+          allCorrect = false;
+        }
       });
     });
 
-    if (allCorrect) score++;
-    else wrongCount++;
-
+    if (allCorrect) score++; else wrongCount++;
     results.push({ q, userAnswer: userAnswers.join(', '), correct: allCorrect });
     showExplanation(q);
-
-    // Restaurar comportamiento normal del botón
-    document.getElementById('btn-next').onclick = nextQuestion;
+    document.getElementById('btn-next').onclick  = nextQuestion;
     document.getElementById('btn-next').disabled = false;
     updateStats();
   }
 
-  // ── Render: Hotspot ────────────────────────────────────────
+  // ── Render: Hotspot ─────────────────────────────────────────
   function renderHotspot(q, container) {
     const afirmaciones = q.afirmaciones || [];
     const selects      = [];
 
+    // Wrapper con estilo especial
+    const wrapper = document.createElement('div');
+    wrapper.className = 'hotspot-wrapper';
+
     afirmaciones.forEach((af, i) => {
-      const row = document.createElement('div');
+      const row     = document.createElement('div');
       row.className = 'hotspot-row';
+
+      const rawText  = typeof af === 'string' ? af : (af.afirmacion || '');
+      const colonIdx = rawText.lastIndexOf(':');
+      const labelText = colonIdx >= 0 ? rawText.substring(0, colonIdx).trim() : rawText;
+      const optsPart  = colonIdx >= 0 ? rawText.substring(colonIdx + 1) : rawText;
+      const optsArray = optsPart.split('/').map(s => s.trim()).filter(Boolean);
 
       const label = document.createElement('div');
       label.className   = 'hotspot-label';
-      label.textContent = typeof af === 'object' ? (af.afirmacion || af) : af;
-
-      // Extraer opciones del texto (formato "A / B / C")
-      const rawText = typeof af === 'string' ? af : (af.afirmacion || '');
-      const colonIdx = rawText.lastIndexOf(':');
-      const optsPart  = colonIdx >= 0 ? rawText.substring(colonIdx + 1) : rawText;
-      const optsArray = optsPart.split('/').map(s => s.trim()).filter(Boolean);
+      label.textContent = labelText;
 
       const sel = document.createElement('select');
       sel.className = 'hotspot-select';
 
       const defaultOpt = document.createElement('option');
-      defaultOpt.value = ''; defaultOpt.textContent = '— Selecciona —';
+      defaultOpt.value       = '';
+      defaultOpt.textContent = '— Selecciona —';
       sel.appendChild(defaultOpt);
 
       optsArray.forEach(o => {
@@ -714,8 +747,10 @@
       selects.push(sel);
       row.appendChild(label);
       row.appendChild(sel);
-      container.appendChild(row);
+      wrapper.appendChild(row);
     });
+
+    container.appendChild(wrapper);
 
     const btnNext = document.getElementById('btn-next');
     btnNext._hotspotHandler = () => validateHotspot(q, selects);
@@ -730,28 +765,108 @@
       : [q.respuesta_correcta];
 
     let allCorrect = true;
-
     selects.forEach((sel, i) => {
       sel.disabled = true;
       const userVal    = sel.value.trim().toLowerCase();
       const correctVal = (correctas[i] || '').trim().toLowerCase();
-      const isOk       = userVal === correctVal || correctVal.includes(userVal) || userVal.includes(correctVal);
-
+      const isOk       = userVal === correctVal
+                      || correctVal.includes(userVal)
+                      || userVal.includes(correctVal);
       sel.classList.add(isOk ? 'correct-sel' : 'wrong-sel');
       if (!isOk) allCorrect = false;
     });
 
-    if (allCorrect) score++;
-    else wrongCount++;
-
+    if (allCorrect) score++; else wrongCount++;
     results.push({ q, userAnswer: selects.map(s => s.value).join(' | '), correct: allCorrect });
     showExplanation(q);
-    document.getElementById('btn-next').onclick   = nextQuestion;
-    document.getElementById('btn-next').disabled  = false;
+    document.getElementById('btn-next').onclick  = nextQuestion;
+    document.getElementById('btn-next').disabled = false;
     updateStats();
   }
 
-  // ── Render: Simulación ─────────────────────────────────────
+  // ── Render: Orden (Drag & Drop) ─────────────────────────────
+  function renderOrden(q, container) {
+    const pasos    = [...(q.opciones || q.pasos_resolucion || [])];
+    const shuffled = [...pasos].sort(() => Math.random() - 0.5);
+
+    const info = document.createElement('p');
+    info.style.cssText   = 'color:#94a3b8;font-size:0.85rem;margin-bottom:12px;';
+    info.textContent     = '🖱️ Arrastra los pasos para ordenarlos correctamente.';
+    container.appendChild(info);
+
+    const ul = document.createElement('ul');
+    ul.className = 'drag-list';
+    let dragSrc = null;
+
+    shuffled.forEach(paso => {
+      const li = document.createElement('li');
+      li.className     = 'drag-item';
+      li.draggable     = true;
+      li.dataset.value = paso;
+      li.innerHTML     = `<span class="drag-handle">⠿</span> ${paso}`;
+
+      li.addEventListener('dragstart', () => {
+        dragSrc = li;
+        setTimeout(() => li.classList.add('dragging'), 0);
+      });
+      li.addEventListener('dragend', () => {
+        li.classList.remove('dragging');
+        ul.querySelectorAll('.drag-item').forEach(i => i.classList.remove('drag-over'));
+      });
+      li.addEventListener('dragover', e => {
+        e.preventDefault();
+        ul.querySelectorAll('.drag-item').forEach(i => i.classList.remove('drag-over'));
+        if (li !== dragSrc) li.classList.add('drag-over');
+      });
+      li.addEventListener('drop', e => {
+        e.preventDefault();
+        if (dragSrc && dragSrc !== li) {
+          const items   = [...ul.querySelectorAll('.drag-item')];
+          const srcIdx  = items.indexOf(dragSrc);
+          const destIdx = items.indexOf(li);
+          if (srcIdx < destIdx) ul.insertBefore(dragSrc, li.nextSibling);
+          else                  ul.insertBefore(dragSrc, li);
+        }
+        li.classList.remove('drag-over');
+      });
+
+      ul.appendChild(li);
+    });
+
+    container.appendChild(ul);
+
+    const checkBtn = document.createElement('button');
+    checkBtn.className   = 'option-btn';
+    checkBtn.textContent = '✅ Verificar orden';
+    checkBtn.onclick     = () => validateOrden(q, ul, checkBtn);
+    container.appendChild(checkBtn);
+  }
+
+  function validateOrden(q, ul, checkBtn) {
+    const correctOrder = q.respuesta_correcta || q.opciones || [];
+    const items        = [...ul.querySelectorAll('.drag-item')];
+    let   allCorrect   = true;
+
+    items.forEach((li, i) => {
+      li.draggable = false;
+      const correctVal = (correctOrder[i] || '').trim().toLowerCase();
+      const userVal    = (li.dataset.value || '').trim().toLowerCase();
+      const isOk       = userVal === correctVal;
+      li.classList.add(isOk ? 'correct-order' : 'wrong-order');
+      if (!isOk) allCorrect = false;
+    });
+
+    checkBtn.disabled = true;
+    if (allCorrect) score++; else wrongCount++;
+
+    const q2 = activeQuestions[currentIndex];
+    results.push({ q: q2, userAnswer: items.map(i => i.dataset.value).join(' → '), correct: allCorrect });
+    showExplanation(q2);
+    document.getElementById('btn-next').disabled = false;
+    updateStats();
+  }
+
+  // ── Render: Simulación ──────────────────────────────────────
   function renderSimulacion(q, container) {
     const info = document.createElement('div');
     info.style.cssText = 'color:#94a3b8;font-style:italic;margin-bottom:12px;font-size:0.9rem;';
@@ -775,34 +890,32 @@
     showBtn.onclick = () => {
       showExplanation(q);
       showBtn.disabled = true;
-      document.getElementById('btn-next').disabled = false;
       score++;
       results.push({ q, userAnswer: 'Revisado', correct: true });
+      document.getElementById('btn-next').disabled = false;
       updateStats();
     };
     container.appendChild(showBtn);
   }
 
-  // ── Mostrar explicación ────────────────────────────────────
+  // ── Explicación ─────────────────────────────────────────────
   function showExplanation(q) {
     let texto = q.explicacion || 'Sin explicación disponible.';
-
-    // Si tiene sub-explicaciones por afirmación
     if (q.afirmaciones && Array.isArray(q.afirmaciones) && typeof q.afirmaciones[0] === 'object') {
       texto = q.afirmaciones.map((af, i) =>
-        `[${i+1}] ${af.afirmacion}\n→ ${af.respuesta || ''}: ${af.explicacion || ''}`
+        `[${i + 1}] ${af.afirmacion}\n→ ${af.respuesta || ''}: ${af.explicacion || ''}`
       ).join('\n\n') + (q.explicacion ? '\n\n' + q.explicacion : '');
     }
-
     document.getElementById('explanation-text').textContent = texto;
     document.getElementById('explanation-box').style.display = 'block';
   }
 
-  // ── Siguiente / Saltar ─────────────────────────────────────
+  // ── Siguiente / Saltar ──────────────────────────────────────
   function nextQuestion() {
-    document.getElementById('btn-next').onclick = nextQuestion;
-    document.getElementById('btn-next')._yesnoHandler   = null;
-    document.getElementById('btn-next')._hotspotHandler = null;
+    document.getElementById('btn-next').onclick          = nextQuestion;
+    document.getElementById('btn-next')._yesnoHandler    = null;
+    document.getElementById('btn-next')._hotspotHandler  = null;
+    document.getElementById('btn-next')._ordenHandler    = null;
     currentIndex++;
     showQuestion();
   }
@@ -816,21 +929,19 @@
     showQuestion();
   }
 
-  // ── Puntuación final ───────────────────────────────────────
+  // ── Puntuación final ────────────────────────────────────────
   function showScore() {
-    document.getElementById('quiz-body').style.display   = 'none';
+    document.getElementById('quiz-body').style.display    = 'none';
     document.getElementById('score-screen').style.display = 'block';
 
     const total = activeQuestions.length;
     const pct   = total > 0 ? Math.round((score / total) * 100) : 0;
     const pass  = pct >= 70;
 
-    const circle = document.getElementById('score-circle');
-    circle.style.background =
+    document.getElementById('score-circle').style.background =
       `conic-gradient(${pass ? '#10b981' : '#ef4444'} ${pct * 3.6}deg, #334155 0deg)`;
     document.getElementById('score-number').textContent = pct + '%';
-
-    document.getElementById('score-details').innerHTML = `
+    document.getElementById('score-details').innerHTML  = `
       <span>${score}</span> correctas de <span>${total}</span> preguntas<br>
       Estado: <span style="color:${pass ? '#10b981' : '#ef4444'}">${pass ? '✅ APROBADO' : '❌ REPROBADO'}</span><br>
       <small style="color:#64748b">Mínimo para aprobar AZ-800: 700/1000 (~70%)</small>
@@ -840,11 +951,11 @@
     reviewList.innerHTML = '<h3 style="color:#94a3b8;margin:20px 0 12px;font-size:0.95rem;">📋 Revisión de respuestas</h3>';
 
     results.forEach((r, i) => {
-      const div = document.createElement('div');
+      const div  = document.createElement('div');
       div.className = `review-item ${r.correct ? 'right' : 'wrong'}`;
       const correctaStr = Array.isArray(r.q.respuesta_correcta)
         ? r.q.respuesta_correcta.join(', ')
-        : r.q.respuesta_correcta;
+        : JSON.stringify(r.q.respuesta_correcta);
       div.innerHTML = `
         <strong>${i + 1}. ${(r.q.pregunta || '').substring(0, 100)}...</strong>
         Tu respuesta: <span class="${r.correct ? 'tag-correct' : 'tag-incorrect'}">${String(r.userAnswer).substring(0, 80)}</span><br>
@@ -854,13 +965,13 @@
     });
   }
 
-  // ── Reiniciar ──────────────────────────────────────────────
+  // ── Reiniciar ───────────────────────────────────────────────
   function restartQuiz() {
     document.getElementById('review-list').innerHTML = '';
     initQuiz();
   }
 
-  // ── Listeners filtros ──────────────────────────────────────
+  // ── Listeners filtros ───────────────────────────────────────
   document.getElementById('topic-filter').addEventListener('change', initQuiz);
   document.getElementById('type-filter').addEventListener('change', initQuiz);
   document.getElementById('num-questions').addEventListener('change', initQuiz);
